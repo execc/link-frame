@@ -2,8 +2,8 @@
   "name": "LinkFrame",
   "version": "0.0.1",
   "manifest_version": 2,
-  "description": "An open geteway for namespace",
-  "homepage_url": "http://extensionizr.com",
+  "description": "An open geteway for Handshake",
+  "homepage_url": "https://easychain.tech",
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
