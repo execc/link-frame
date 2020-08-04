@@ -13,7 +13,8 @@
   "background": {
     "scripts": [
       "src/bg/background.js",
-      "src/bg/resolver.js"
+      "src/bg/resolver.js",
+      "src/bg/tld.js"
     ],
     "persistent": true
   },

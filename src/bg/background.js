@@ -1,6 +1,8 @@
 const RESOLUTION_TIMEOUT = 10000
 
 const pac = {
+  // This is stub function that is used as template for generating a real PAC script later
+  //
   _scriptStub: function () {
     var cache = CACHE_HERE;
   
@@ -27,6 +29,7 @@ const pac = {
     }
   },
   buildObject: function (domain, ip) {
+    // TODO: Really cache things
     console.log(`buildObject: ${domain}, ${ip}`)
     var obj = {};
     obj[domain] = [ip];
@@ -34,13 +37,20 @@ const pac = {
   },
 }
 
-const handleObBeforeRequest = async details => {
+const handleOnBeforeRequest = async details => {
   const urlhttpreplace = details.url.replace(/\w+?:\/\//, '')
   const url = urlhttpreplace.replace(/[\\/].*/g, '') // eslint-disable-line no-useless-escape
   let domainhtml = urlhttpreplace.match(/[\\/].*/g) // eslint-disable-line no-useless-escape
-  let clearTime = null
   const name = url.replace(/\/$/g, '')
   if (domainhtml === null) domainhtml = ['']
+
+  const tld = getTLD(name);
+  if (!tld || isKnownTLD(tld)) {
+    // Can not determine TLD or TLD is valid top level domain - skip resolution
+    //
+    console.log(`Skipping resolution of known or invalid TLD: ${tld}`)
+    return {}
+  }
 
   console.log(`Resolving data for address: ${name}`)
   const resolutionResult = await resolve(url.replace('.hns', ''))
@@ -67,7 +77,8 @@ const handleObBeforeRequest = async details => {
         console.log('Set new PAC script, length = ' + script.length); 
       });
 
-      return null;
+      // Proxy settings is applied immediately. Just continue request as normal.
+      return {};
     }
     if (resolutionResult.kind === 'hash') {
       
@@ -115,11 +126,10 @@ const handleObBeforeRequest = async details => {
 }
 
 chrome.webRequest.onBeforeRequest.addListener(
-  handleObBeforeRequest, 
+  handleOnBeforeRequest, 
   {
     urls: [
-      '*://*.hns/', 
-      '*://*.hns/*'
+      '<all_urls>'
     ]
   }, 
   [
