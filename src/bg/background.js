@@ -1,4 +1,8 @@
 const RESOLUTION_TIMEOUT = 10000
+const CONTINUE = {}
+const CANCEL = {
+  cancel: true
+}
 
 const pac = {
   // This is stub function that is used as template for generating a real PAC script later
@@ -49,7 +53,7 @@ const handleOnBeforeRequest = async details => {
     // Can not determine TLD or TLD is valid top level domain - skip resolution
     //
     console.log(`Skipping resolution of known or invalid TLD: ${tld}`)
-    return {}
+    return CONTINUE
   }
 
   console.log(`Resolving data for address: ${name}`)
@@ -104,15 +108,15 @@ const handleOnBeforeRequest = async details => {
       })
 
       // Cancel current request as we're changing tab content to resolved tab
-      return {cancel: true}
+      return CANCEL
     }
     // Continue current request
 
-    return {} 
+    return CONTINUE
   } else {
     // Continue current request
 
-    return {} 
+    return CONTINUE
   }
 }
 
