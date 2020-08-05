@@ -17,7 +17,7 @@ const resolveIp = async domain => {
     const result = await fetchDns(queryUrl);
     console.log(`resolveIp result: ${JSON.stringify(result)}`)
     const success = result.Status === 0;
-    if (success) {
+    if (success && result.Answer.length) {
         return result.Answer[0].data
     }
 }
@@ -27,7 +27,7 @@ const resolveHash = async domain => {
     const result = await fetchDns(queryUrl);
     console.log(`resolveHash result: ${JSON.stringify(result)}`)
     const success = result.Status === 0;
-    if (success) {
+    if (success && result.Answer.length) {
         return extractHash(result)
     }
 }

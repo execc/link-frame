@@ -53,7 +53,8 @@ const handleOnBeforeRequest = async details => {
   }
 
   console.log(`Resolving data for address: ${name}`)
-  const resolutionResult = await resolve(url.replace('.hns', ''))
+
+  const resolutionResult = await resolve(name)
   console.log(`Resolved: ${JSON.stringify(resolutionResult)}`)
 
   if (resolutionResult.success) {
@@ -81,7 +82,29 @@ const handleOnBeforeRequest = async details => {
       return {};
     }
     if (resolutionResult.kind === 'hash') {
-      
+      chrome.tabs.getSelected(null, tab => {
+        chrome.tabs.update(tab.id, { url: 'loading.html' })
+    
+          let clearTime = setTimeout(() => {
+              return chrome.tabs.update(tab.id, { url: '404.html' })
+          }, RESOLUTION_TIMEOUT)
+
+          const url = `https://siasky.net/${resolutionResult.hash}${domainhtml}`
+          console.log(`Trying to resolve hashed url: ${url}`)
+
+          fetch(url, { method: 'HEAD' }).then(rs => {
+            clearTimeout(clearTime);
+
+            if (rs.status !== 200) {
+              chrome.tabs.update(tab.id, { url: '404.html' })
+            } else {
+              chrome.tabs.update(tab.id, { url: url })
+            }
+          })
+      })
+
+      // Cancel current request as we're changing tab content to resolved tab
+      return {cancel: true}
     }
     // Continue current request
 
@@ -91,38 +114,6 @@ const handleOnBeforeRequest = async details => {
 
     return {} 
   }
-
-  chrome.tabs.getSelected(null, tab => {
-    chrome.tabs.update(tab.id, { url: 'loading.html' })
-
-      clearTime = setTimeout(() => {
-          return chrome.tabs.update(tab.id, { url: '404.html' })
-      }, RESOLUTION_TIMEOUT)
-
-      
-
-      /*
-      resolver.resolve(name, provider).then(ipfsHash => {
-          clearTimeout(clearTime)
-          let url = 'https://ipfs.infura.io/ipfs/' + ipfsHash + domainhtml[0]
-          return fetch(url, { method: 'HEAD' }).then(response => response.status).then(statusCode => {
-              if (statusCode !== 200) return extension.tabs.update(tab.id, { url: '404.html' })
-              extension.tabs.update(tab.id, { url: url })
-          })
-          .catch(err => {
-              url = 'https://ipfs.infura.io/ipfs/' + ipfsHash + domainhtml[0]
-              extension.tabs.update(tab.id, {url: url})
-              return err
-          })
-      })
-      .catch(err => {
-          clearTimeout(clearTime)
-          const url = err === 'unsupport' ? 'unsupport' : 'error'
-          extension.tabs.update(tab.id, {url: `${url}.html?name=${name}`})
-      })
-      */
-  })
-  return { cancel: true }
 }
 
 chrome.webRequest.onBeforeRequest.addListener(
