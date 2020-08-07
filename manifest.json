@@ -26,6 +26,7 @@
   "options_page": "src/options_page/index.html",
   "permissions": [  
     "history",
+    "alarms",
     "proxy",
     "webRequest",
     "webRequestBlocking",

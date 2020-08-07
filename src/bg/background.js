@@ -1,5 +1,5 @@
 const RESOLUTION_TIMEOUT = 10000
-const CONTINUE = {}
+const CONTINUE = null
 const CANCEL = {
   cancel: true
 }
@@ -14,6 +14,8 @@ const setProxySync = (config) => {
 }
 
 const pac = {
+  cache: {} ,
+
   // This is stub function that is used as template for generating a real PAC script later
   //
   _scriptStub: function () {
@@ -37,16 +39,14 @@ const pac = {
         res = directive + ips.join(port + '; ' + directive) + port;
       }
   
-      console.log(`FindProxyForURL: url: ${url}, host: ${host}, res: ${res}`)
+      alert(`FindProxyForURL: url: ${url}, host: ${host}, res: ${res}`)
       return res;
     }
   },
   buildObject: function (domain, ip) {
-    // TODO: Really cache things
     console.log(`buildObject: ${domain}, ${ip}`)
-    var obj = {};
-    obj[domain] = [ip];
-    return JSON.stringify(obj);
+    pac.cache[domain] = [ip]
+    return JSON.stringify(pac.cache);
   },
 }
 
@@ -145,3 +145,13 @@ chrome.webRequest.onBeforeRequest.addListener(
     "blocking"
   ]
 )
+
+chrome.proxy.onProxyError.addListener(details => {
+  console.log(`Chrome proxy error: ${JSON.stringify(details)}`)
+})
+
+chrome.alarms.create({periodInMinutes: 2});
+chrome.alarms.onAlarm.addListener(function () {
+  pac.cache = {}
+  console.log('Cache cleared');
+});
