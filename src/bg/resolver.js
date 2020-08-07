@@ -1,30 +1,75 @@
-const DNS_OVER_HTTPS_RESOLVER = 'https://dns.easychain.tech'
+const DEFAULT_HANDSHAKE = 'https://handshake.easychain.tech'
+const DEFAULT_DNS = 'https://dns.easychain.tech'
+const DEFAULT_SIA = 'https://siasky.net'
 
 const getResolver = () => {
-    return DNS_OVER_HTTPS_RESOLVER
+    return getOptionValue('dns', DEFAULT_DNS)
 }
 
-const fetchDns = async url => {
-    return fetch(url)
+const getHandshake = () => {
+    return getOptionValue('handshake', DEFAULT_DNS)
+}
+
+const getOptionValue = (key, defaultValue) => {
+    return new Promise ((resolve, _) => {
+        const req = {}
+        req[key] = defaultValue
+        chrome.storage.sync.get(req, items => {
+            resolve(items[key])
+          })
+    })
+}
+
+const fetchDns = async (url, dns) => {
+    return fetch(url, {
+        headers: {
+            'x-dns': dns
+        }
+    })
             .then(rs => rs.json())
             .catch(_ => ({
                 Status: 5
             }))
 }
 
-const resolveIp = async domain => {
-    const queryUrl = `${getResolver()}/resolve?name=${domain}`
-    const result = await fetchDns(queryUrl);
+const resolveBlockchainInfo = async(domain) => {
+    const url = await getHandshake()
+    const query = { 
+        "method": "getnameresource", 
+        "params": [ domain ] 
+    }
+    const result = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Authorization': 'Basic ' + btoa('x:' + 'qwerty'),
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify(query)
+    }).then(res => res.json()).catch(_ => ({
+        result: {
+            records: []
+        }
+    }))
+    console.log(`resolveBlockchainInfo result: ${JSON.stringify(result)}`)
+    return result
+}
+
+const resolveIp = async (domain, dns) => {
+    console.log(`Called resolveIp for domain/dns: ${domain}/${dns}`)
+    const queryUrl = `${(await getResolver())}/resolve?name=${domain}`
+    const result = await fetchDns(queryUrl, dns)
     console.log(`resolveIp result: ${JSON.stringify(result)}`)
-    const success = result.Status === 0;
+    const success = result.Status === 0
     if (success && result.Answer.length) {
         return result.Answer[0].data
     }
 }
 
-const resolveHash = async domain => {
-    const queryUrl = `${getResolver()}/resolve?name=${domain}&type=TXT`
-    const result = await fetchDns(queryUrl);
+const resolveHash = async (domain, dns) => {
+    console.log(`Called resolveHash for domain/dns: ${domain}/${dns}`)
+    const queryUrl = `${(await getResolver())}/resolve?name=${domain}&type=TXT`
+    const result = await fetchDns(queryUrl, dns);
     console.log(`resolveHash result: ${JSON.stringify(result)}`)
     const success = result.Status === 0;
     if (success && result.Answer.length) {
@@ -45,26 +90,71 @@ const extractHash = response => {
     return hashRecords.length === 0 ? undefined : hashRecords[0]
 }
 
-const resolve = async domain => {
-    console.log(`Called resolve for ${domain}`)
-    const ip = await resolveIp(domain)
-    if (ip) {
+const extractBlockchainHash = rs => {
+    const hashRecords = rs.result.records
+        .filter(rec => rec.type === 'TXT')
+        .map(rec => ({
+            data: rec.txt[0]
+        }))
+        .map(answer => ({
+            provider: getProvider(answer.data),
+            ...answer
+        }))
+        .filter(answer => answer.provider !== undefined)
+    return hashRecords.length === 0 ? undefined : hashRecords[0]
+}
+
+const extractBlockchainDns = rs => {
+    const dnsRecords = rs.result.records
+        .filter(rec => rec.type === 'GLUE4')
+        .map(rec => rec.address)
+    console.log(`extractBlockchainDns result: ${JSON.stringify(dnsRecords)}`)
+    return dnsRecords.length === 0 ? undefined : dnsRecords[0]
+}
+
+const resolve = async (domain, tld) => {
+    console.log(`Called resolve for ${domain} with tld ${tld}`)
+    const info = await resolveBlockchainInfo(tld)
+    if (!info.result || !info.result.records) {
+        console.log(`No records in blockchain for tld: ${tld}`)
+
+        return {
+            'success': false
+        }
+    }
+    // Check for TXT records with hash first
+    const blockchainHash = extractBlockchainHash(info)
+    if (blockchainHash) {
         return {
             'success': true,
-            'kind': 'ip',
-            'address': ip
+            'kind': 'hash',
+            'name': blockchainHash.provider.name,
+            'hash': blockchainHash.data
         }
-    } else {
-        const hash = await resolveHash(domain)
-        if (hash) {
+    }
+    const dns = extractBlockchainDns(info)
+    if (dns) {
+        console.log(`Got DNS from blockchain: ${dns}`)
+        const ip = await resolveIp(domain, dns)
+        if (ip) {
             return {
                 'success': true,
-                'kind': 'hash',
-                'name': hash.provider.name,
-                'hash': hash.data
+                'kind': 'ip',
+                'address': ip
+            }
+        } else {
+            const hash = await resolveHash(domain, dns)
+            if (hash) {
+                return {
+                    'success': true,
+                    'kind': 'hash',
+                    'name': hash.provider.name,
+                    'hash': hash.data
+                }
             }
         }
     }
+
     return {
         'success': false
     }

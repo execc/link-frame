@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>LinkFrame Options</title>
+</head>
+
+<style>
+    label {
+        display: inline-block;
+        width: 180px;
+        text-align: right;
+    }
+
+    input {
+        width: 250px;
+    }
+    
+    .option_item {
+        margin-top: 5px;
+    }
+</style>
+
+<body>
+    <div class="option_item">
+        <label>Handshake API Address:</label>
+        <input id="handshake" />
+    </div>
+
+    <div class="option_item">
+        <label>DNS Over HTTPS Address:</label>
+        <input id="dns" />
+    </div>
+
+    <div class="option_item">
+        <label>SIA Gateway Address:</label>
+        <input id="sia" />
+    </div>
+    
+    <button id="save">Save</button>
+    <button id="reset">Reset to default</button>
+    <div id="status"></div>
+
+    <script src="options.js"></script>
+</body>
+
+</html>

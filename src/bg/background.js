@@ -56,9 +56,16 @@ const handleOnBeforeRequest = async details => {
     return CONTINUE
   }
 
+  if (name.startsWith('chrome-')) {
+    // Special chrome URL - do not resolve
+    //
+    console.log(`Skipping resolution of chrome TLD: ${name}`)
+    return CONTINUE
+  }
+
   console.log(`Resolving data for address: ${name}`)
 
-  const resolutionResult = await resolve(name)
+  const resolutionResult = await resolve(name, tld)
   console.log(`Resolved: ${JSON.stringify(resolutionResult)}`)
 
   if (resolutionResult.success) {
