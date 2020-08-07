@@ -1,4 +1,5 @@
 const DEFAULT_HANDSHAKE = 'https://handshake.easychain.tech'
+const DEFAULT_API_KEY = 'qwerty'
 const DEFAULT_DNS = 'https://dns.easychain.tech'
 const DEFAULT_SIA = 'https://siasky.net'
 
@@ -8,6 +9,14 @@ const getResolver = () => {
 
 const getHandshake = () => {
     return getOptionValue('handshake', DEFAULT_DNS)
+}
+
+const getHandshakeApiKey = () => {
+    return getOptionValue('key', DEFAULT_DNS)
+}
+
+const getSiaGateway = () => {
+    return getOptionValue('sia', DEFAULT_DNS)
 }
 
 const getOptionValue = (key, defaultValue) => {
@@ -41,7 +50,7 @@ const resolveBlockchainInfo = async(domain) => {
     const result = await fetch(url, {
         method: 'POST',
         headers: {
-            'Authorization': 'Basic ' + btoa('x:' + 'qwerty'),
+            'Authorization': 'Basic ' + btoa('x:' + (await getHandshakeApiKey())),
             'Content-Type': 'application/json',
             'Accept': 'application/json'
         },
