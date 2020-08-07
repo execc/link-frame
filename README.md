@@ -6,8 +6,8 @@ Link-Frame - an open resolver for Handshake domains
 2. Enable Development Mode (upper right corner)
 3. Click 'Load unpacked extension'
 4. Point it to the folder containing this files
-???
-5. PROFIT!!!
+5. ???
+6. PROFIT!!!
 
 ## Settings
 API's that are used by extension is completely configurable, so you are free to use you own Handhake node. You can set the following properties on Options page:
@@ -34,6 +34,7 @@ Given name such as 'something.tld' this plugin will perform the following things
 With this algorithm plugin can effectively work with both on-chain and off-chain DNS records.
 
 *Examples:*
+
 http://welcome.nb/ - 2nd level domain, points to IP
 
 http://3chffffff/ - 1st level domain, points to IP
