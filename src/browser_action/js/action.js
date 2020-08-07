@@ -5,7 +5,6 @@ document.querySelector('#go-to-options').addEventListener('click', function() {
 const DEFAULT_HANDSHAKE = 'https://handshake.easychain.tech'
 const DEFAULT_DNS = 'https://dns.easychain.tech'
 const DEFAULT_SIA = 'https://siasky.net'
-const DEFAULT_API_KEY = 'qwerty'
 
 // Restores select box and checkbox state using the preferences
 // stored in chrome.storage.
@@ -19,7 +18,6 @@ function restore_options() {
         document.getElementById('handshake').innerHTML = items.handshake
         document.getElementById('dns').innerHTML = items.dns
         document.getElementById('sia').innerHTML = items.sia
-        //document.getElementById('key').innerHTML = items.key
     });
 }
 
