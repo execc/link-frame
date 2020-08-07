@@ -4,6 +4,15 @@ const CANCEL = {
   cancel: true
 }
 
+const setProxySync = (config) => {
+  return new Promise ((resolve, _) => {
+    chrome.proxy.settings.set({value: config}, function () {
+      console.log('Set new PAC script, length = ' + config.length); 
+      resolve()
+    });
+  })
+}
+
 const pac = {
   // This is stub function that is used as template for generating a real PAC script later
   //
@@ -85,12 +94,10 @@ const handleOnBeforeRequest = async details => {
         },
       };
 
-      chrome.proxy.settings.set({value: config}, function () {
-        console.log('Set new PAC script, length = ' + script.length); 
-      });
-
+      await setProxySync(config);
+      console.log(`Waited to apply proxy, continuing request to ${name}...`)
       // Proxy settings is applied immediately. Just continue request as normal.
-      return {};
+      return CONTINUE;
     }
     if (resolutionResult.kind === 'hash') {
       chrome.tabs.getSelected(null, tab => {
