@@ -8,15 +8,15 @@ const getResolver = () => {
 }
 
 const getHandshake = () => {
-    return getOptionValue('handshake', DEFAULT_DNS)
+    return getOptionValue('handshake', DEFAULT_HANDSHAKE)
 }
 
 const getHandshakeApiKey = () => {
-    return getOptionValue('key', DEFAULT_DNS)
+    return getOptionValue('key', DEFAULT_API_KEY)
 }
 
 const getSiaGateway = () => {
-    return getOptionValue('sia', DEFAULT_DNS)
+    return getOptionValue('sia', DEFAULT_SIA)
 }
 
 const getOptionValue = (key, defaultValue) => {

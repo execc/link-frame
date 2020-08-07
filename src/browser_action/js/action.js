@@ -12,8 +12,7 @@ function restore_options() {
     chrome.storage.sync.get({
         handshake: DEFAULT_HANDSHAKE,
         dns: DEFAULT_DNS,
-        sia: DEFAULT_SIA,
-        key: DEFAULT_API_KEY
+        sia: DEFAULT_SIA
     }, function (items) {
         document.getElementById('handshake').innerHTML = items.handshake
         document.getElementById('dns').innerHTML = items.dns
