@@ -41,7 +41,7 @@ http://3chffffff/ - 1st level domain, points to IP
 
 http://millsgroup/ - 1st level domain, points to SIA
 
-http://example.example/ - 2nd level domain, points to SIA
+http://example.millsgroup/ - 2nd level domain, points to SIA
 
 
 ## Dns-Over-Https proxy
