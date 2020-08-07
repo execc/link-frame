@@ -114,11 +114,19 @@ const extractBlockchainHash = rs => {
 }
 
 const extractBlockchainDns = rs => {
-    const dnsRecords = rs.result.records
+    var dnsRecords = rs.result.records
         .filter(rec => rec.type === 'GLUE4')
         .map(rec => rec.address)
+    var result = dnsRecords.length === 0 ? undefined : dnsRecords[0]
+
+    if (!result) {
+        dnsRecords = rs.result.records
+            .filter(rec => rec.type === 'NS')
+            .map(rec => rec.ns)
+        result = dnsRecords.length === 0 ? undefined : dnsRecords[0]
+    }
     console.log(`extractBlockchainDns result: ${JSON.stringify(dnsRecords)}`)
-    return dnsRecords.length === 0 ? undefined : dnsRecords[0]
+    return result;
 }
 
 const resolve = async (domain, tld) => {
