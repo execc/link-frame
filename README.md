@@ -1,5 +1,5 @@
-# link-frame
-LinkFrame - an open resolver for Handshake domains
+# Link-Frame
+Link-Frame - an open resolver for Handshake domains
 
 ## Installation
 1. Open Chrome -> Additional Tools -> Extensions
@@ -35,8 +35,11 @@ With this algorithm plugin can effectively work with both on-chain and off-chain
 
 *Examples:*
 http://welcome.nb/ - 2nd level domain, points to IP
+
 http://3chffffff/ - 1st level domain, points to IP
+
 http://millsgroup/ - 1st level domain, points to SIA
+
 http://example.example/ - 2nd level domain, points to SIA
 
 
@@ -46,6 +49,7 @@ The Dns-Over-Https proxy in general follows the standard https://tools.ietf.org/
 Service is currently running on https://dns.easychain.tech, however you are free to host you own instance. 
 
 *Example queries:*
+
 Resolve google.ru using Google's DNS (8.8.8.8)
 ```
 curl --location --request GET 'https://dns.easychain.tech/resolve?name=google.ru' \
