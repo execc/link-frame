@@ -124,6 +124,16 @@ const handleOnBeforeRequest = async details => {
       // Cancel current request as we're changing tab content to resolved tab
       return CANCEL
     }
+
+    if (resolutionResult.kind === 'redirect') {
+      chrome.tabs.getSelected(null, tab => {
+        chrome.tabs.update(tab.id, { url: resolutionResult.url })
+      })
+
+      // Cancel current request as we're changing tab content to resolved tab
+      return CANCEL
+    }
+
     // Continue current request
 
     return CONTINUE

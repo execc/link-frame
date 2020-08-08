@@ -71,7 +71,18 @@ const resolveIp = async (domain, dns) => {
     console.log(`resolveIp result: ${JSON.stringify(result)}`)
     const success = result.Status === 0
     if (success && result.Answer.length) {
-        return result.Answer[0].data
+        if (result.Answer[0].type === 5) {
+            if (result.Answer[0].data === 'redirect.dns.live') {
+                return {
+                    type: 'redirect'
+                }
+            }
+        } else {
+            return {
+                type: 'ip',
+                data: result.Answer[0].data
+            }
+        }
     }
 }
 
@@ -80,9 +91,26 @@ const resolveHash = async (domain, dns) => {
     const queryUrl = `${(await getResolver())}/resolve?name=${domain}&type=TXT`
     const result = await fetchDns(queryUrl, dns);
     console.log(`resolveHash result: ${JSON.stringify(result)}`)
-    const success = result.Status === 0;
+    const success = result.Status === 0
     if (success && result.Answer.length) {
         return extractHash(result)
+    }
+}
+
+const resolveRedirect = async (domain, dns) => {
+    console.log(`Called resolveRedirect for domain/dns: ${domain}/${dns}`)
+    const queryUrl = `${(await getResolver())}/resolve?name=_redirect.${domain}&type=TXT`
+    const result = await fetchDns(queryUrl, dns);
+    console.log(`resolveRedirect result: ${JSON.stringify(result)}`)
+    const success = result.Status === 0
+    if (success && result.Answer.length) {
+        const redirectString = decode(result.Answer[0].data[0].data)
+        console.log(`resolveRedirect redirectString: ${redirectString}`)
+        const redirectSegments = redirectString.split(';')
+        const toSegment = redirectSegments.filter(segment => segment.startsWith('to='))[0]
+        if (toSegment) {
+            return toSegment.substring(3)
+        }
     }
 }
 
@@ -154,10 +182,22 @@ const resolve = async (domain, tld) => {
         console.log(`Got DNS from blockchain: ${dns}`)
         const ip = await resolveIp(domain, dns)
         if (ip) {
-            return {
-                'success': true,
-                'kind': 'ip',
-                'address': ip
+            if (ip.type === 'ip') {
+                return {
+                    'success': true,
+                    'kind': 'ip',
+                    'address': ip
+                }
+            }
+            if (ip.type === 'redirect') {
+                const redirectUrl = await resolveRedirect(domain, dns)
+                if (redirectUrl) {
+                    return {
+                        'success': true,
+                        'kind': 'redirect',
+                        'url': redirectUrl
+                    }
+                }
             }
         } else {
             const hash = await resolveHash(domain, dns)
