@@ -1510,7 +1510,7 @@ const TLDs = {
     "ZW": true
 }
 
-const TLD_PATTER = /(?<TLD>\.?\w+?)(?:$|\/)/
+const TLD_PATTER = /(?<TLD>\.?[\w-]+?)(?:$|\/)/
 
 const isKnownTLD = (tld) => {
     return TLDs[tld.toUpperCase()] === true
@@ -1536,6 +1536,8 @@ test1 = () => {
     console.log(getTLD('http://3chffffff/'))
     console.log(getTLD('http://3chffffff'))
     console.log(getTLD('3chffffff'))
+    console.log(getTLD('home.xn--jw9h'))
+    console.log(getTLD('test-dns.home.xn--jw9h'))
 }
 
 //test1()
