@@ -72,11 +72,14 @@ const handleOnBeforeRequest = async details => {
     return CONTINUE
   }
 
+  
   console.log(`Resolving data for address: ${name}`)
 
+  const t0 = new Date().getTime()
   const resolutionResult = await resolve(name, tld)
+  const t1 = new Date().getTime()
   console.log(`Resolved: ${JSON.stringify(resolutionResult)}`)
-
+  console.log(`Resolution took ${t1 - t0}ms.`)
   if (resolutionResult.success) {
     // Found info in decentralized DNS
 
