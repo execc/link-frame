@@ -76,6 +76,11 @@ const resolveIp = async (domain, dns) => {
                 return {
                     type: 'redirect'
                 }
+            } else {
+                return {
+                    type: 'redirect',
+                    dest: result.Answer[0].data
+                }
             }
         } else {
             return {
@@ -186,16 +191,28 @@ const resolve = async (domain, tld) => {
                 return {
                     'success': true,
                     'kind': 'ip',
-                    'address': ip
+                    'address': ip.data
                 }
             }
             if (ip.type === 'redirect') {
-                const redirectUrl = await resolveRedirect(domain, dns)
-                if (redirectUrl) {
+                if (!ip.dest) {
+                    const redirectUrl = await resolveRedirect(domain, dns)
+                    if (redirectUrl) {
+                        return {
+                            'success': true,
+                            'kind': 'redirect',
+                            'url': redirectUrl
+                        }
+                    }
+                } else {
+                    var dest = ip.dest
+                    if (!dest.startsWith('http')) {
+                        dest = `http://${dest}`
+                    }
                     return {
                         'success': true,
                         'kind': 'redirect',
-                        'url': redirectUrl
+                        'url': dest
                     }
                 }
             }

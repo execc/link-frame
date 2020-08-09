@@ -97,7 +97,7 @@ const handleOnBeforeRequest = async details => {
         },
       };
 
-      await setProxySync(config);
+      await setProxySync(config)
       console.log(`Waited to apply proxy, continuing request to ${name}...`)
       // Proxy settings is applied immediately. Just continue request as normal.
       return CONTINUE;
