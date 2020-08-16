@@ -12,6 +12,7 @@
   "default_locale": "en",
   "background": {
     "scripts": [
+      "src/bg/syncFetch.js",
       "src/bg/background.js",
       "src/bg/resolver.js",
       "src/bg/tld.js"

@@ -3,6 +3,17 @@ const DEFAULT_API_KEY = 'qwerty'
 const DEFAULT_DNS = 'https://dns.easychain.tech'
 const DEFAULT_SIA = 'https://siasky.net'
 
+const defaultProps = {
+    dns: DEFAULT_DNS,
+    handshake: DEFAULT_HANDSHAKE,
+    sia: DEFAULT_SIA,
+    key: DEFAULT_API_KEY
+}
+
+var props = {
+    ...defaultProps
+}
+
 const getResolver = () => {
     return getOptionValue('dns', DEFAULT_DNS)
 }
@@ -20,54 +31,48 @@ const getSiaGateway = () => {
 }
 
 const getOptionValue = (key, defaultValue) => {
-    return new Promise ((resolve, _) => {
-        const req = {}
-        req[key] = defaultValue
-        chrome.storage.sync.get(req, items => {
-            resolve(items[key])
-          })
-    })
+    return props[key] || defaultValue
 }
 
-const fetchDns = async (url, dns) => {
-    return fetch(url, {
+const fetchDns = (url, dns) => {
+    const rs = syncFetch(url, {
         headers: {
             'x-dns': dns
         }
     })
-            .then(rs => rs.json())
-            .catch(_ => ({
-                Status: 5
-            }))
+
+    if (!rs.response) {
+        return {
+            Status: 5
+        }
+    }
+
+    return rs.response
 }
 
-const resolveBlockchainInfo = async(domain) => {
-    const url = await getHandshake()
+const resolveBlockchainInfo = (domain) => {
+    const url = getHandshake()
     const query = { 
         "method": "getnameresource", 
         "params": [ domain ] 
     }
-    const result = await fetch(url, {
+    const result = syncFetch(url, {
         method: 'POST',
         headers: {
-            'Authorization': 'Basic ' + btoa('x:' + (await getHandshakeApiKey())),
+            'Authorization': 'Basic ' + btoa('x:' + (getHandshakeApiKey())),
             'Content-Type': 'application/json',
             'Accept': 'application/json'
         },
         body: JSON.stringify(query)
-    }).then(res => res.json()).catch(_ => ({
-        result: {
-            records: []
-        }
-    }))
+    }).response
     console.log(`resolveBlockchainInfo result: ${JSON.stringify(result)}`)
     return result
 }
 
-const resolveIp = async (domain, dns) => {
+const resolveIp = (domain, dns) => {
     console.log(`Called resolveIp for domain/dns: ${domain}/${dns}`)
-    const queryUrl = `${(await getResolver())}/resolve?name=${domain}`
-    const result = await fetchDns(queryUrl, dns)
+    const queryUrl = `${(getResolver())}/resolve?name=${domain}`
+    const result = fetchDns(queryUrl, dns)
     console.log(`resolveIp result: ${JSON.stringify(result)}`)
     const success = result.Status === 0
     if (success && result.Answer.length) {
@@ -91,10 +96,10 @@ const resolveIp = async (domain, dns) => {
     }
 }
 
-const resolveHash = async (domain, dns) => {
+const resolveHash = (domain, dns) => {
     console.log(`Called resolveHash for domain/dns: ${domain}/${dns}`)
-    const queryUrl = `${(await getResolver())}/resolve?name=${domain}&type=TXT`
-    const result = await fetchDns(queryUrl, dns);
+    const queryUrl = `${(getResolver())}/resolve?name=${domain}&type=TXT`
+    const result = fetchDns(queryUrl, dns);
     console.log(`resolveHash result: ${JSON.stringify(result)}`)
     const success = result.Status === 0
     if (success && result.Answer.length) {
@@ -102,10 +107,10 @@ const resolveHash = async (domain, dns) => {
     }
 }
 
-const resolveRedirect = async (domain, dns) => {
+const resolveRedirect = (domain, dns) => {
     console.log(`Called resolveRedirect for domain/dns: ${domain}/${dns}`)
-    const queryUrl = `${(await getResolver())}/resolve?name=_redirect.${domain}&type=TXT`
-    const result = await fetchDns(queryUrl, dns);
+    const queryUrl = `${(getResolver())}/resolve?name=_redirect.${domain}&type=TXT`
+    const result = fetchDns(queryUrl, dns);
     console.log(`resolveRedirect result: ${JSON.stringify(result)}`)
     const success = result.Status === 0
     if (success && result.Answer.length) {
@@ -162,9 +167,9 @@ const extractBlockchainDns = rs => {
     return result;
 }
 
-const resolve = async (domain, tld) => {
+const resolve = (domain, tld) => {
     console.log(`Called resolve for ${domain} with tld ${tld}`)
-    const info = await resolveBlockchainInfo(tld)
+    const info = resolveBlockchainInfo(tld)
     if (!info.result || !info.result.records) {
         console.log(`No records in blockchain for tld: ${tld}`)
 
@@ -185,7 +190,7 @@ const resolve = async (domain, tld) => {
     const dns = extractBlockchainDns(info)
     if (dns) {
         console.log(`Got DNS from blockchain: ${dns}`)
-        const ip = await resolveIp(domain, dns)
+        const ip = resolveIp(domain, dns)
         if (ip) {
             if (ip.type === 'ip') {
                 return {
@@ -196,7 +201,7 @@ const resolve = async (domain, tld) => {
             }
             if (ip.type === 'redirect') {
                 if (!ip.dest) {
-                    const redirectUrl = await resolveRedirect(domain, dns)
+                    const redirectUrl = resolveRedirect(domain, dns)
                     if (redirectUrl) {
                         return {
                             'success': true,
@@ -217,7 +222,7 @@ const resolve = async (domain, tld) => {
                 }
             }
         } else {
-            const hash = await resolveHash(domain, dns)
+            const hash = resolveHash(domain, dns)
             if (hash) {
                 return {
                     'success': true,
@@ -265,6 +270,21 @@ const PROVIDERS = [
 const SKYLINK_HASH_PATTERN = /^[a-zA-Z0-9_-]{46}/;
 // END PROVIDERS
 
+// START PROPERTIES
+const loadProperties = () => {
+    chrome.storage.sync.get(defaultProps, _props => {
+        props = _props
+        console.log(`Loaded properties: ${JSON.stringify(props)}`)
+    })
+}
+chrome.storage.sync.addListener(_ => {
+    console.log(`Loading changed properties...`)
+    loadProperties()
+})
+console.log(`Loading initial properties...`)
+loadProperties()
+// END PROPERTIES
+
 // TEST
 const TEST_DATA = 
 {"Status":0,"TC":false,"RD":true,"RA":false,"AD":false,"CD":false,"Question":[{"type":16,"name":"3chffffff"}],"Answer":[{"type":16,"data":[{"type":"Buffer","data":[118,65,67,103,87,70,65,70,105,71,119,115,103,113,45,118,89,50,109,76,100,112,122,88,98,68,108,102,51,67,48,82,121,76,99,113,95,118,56,100,89,85,79,102,71,103]}],"TTL":3600,"name":"3chffffff"}],"Additional":[]}
@@ -273,8 +293,8 @@ const test = () => {
     console.log(extractHash(TEST_DATA))
 }
 
-const test2 = async () => {
-    const result = await resolve('3chffffff')
+const test2 = () => {
+    const result = resolve('3chffffff')
     console.log(JSON.stringify(result))
 }
 
